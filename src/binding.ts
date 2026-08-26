@@ -11,12 +11,20 @@ export interface WorkspaceRow {
 /** Session catalog fact used to select only ordinary matching Sessions. */
 export interface SessionRow {
   sessionId: string
+  title?: string
   updatedAt: number
   running: boolean
   blank: boolean
   parentSessionId?: string
   origin?: 'subagent'
   cwd?: string
+}
+
+/** Human-facing Session label derived from the optional Harness title projection. */
+export const sessionDisplayName = (session: Pick<SessionRow, 'title'>): string => {
+  const title = session.title?.replace(/\s+/gu, ' ').trim()
+  if (title === undefined || title.length === 0) return '未命名会话'
+  return Array.from(title).slice(0, 80).join('')
 }
 
 /** Harness catalog and resolver surface required by the binding controller. */
@@ -75,7 +83,9 @@ export class BindingController {
         && row.parentSessionId === undefined
         && row.cwd !== undefined
         && canonical(row.cwd) === canonical(workspace.path))
-      .sort((left, right) => Number(right.running) - Number(left.running))
+      .sort((left, right) => Number(right.running) - Number(left.running)
+        || right.updatedAt - left.updatedAt
+        || left.sessionId.localeCompare(right.sessionId))
   }
 
   /**

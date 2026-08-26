@@ -1,5 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
-import { BindingController, type BindingCatalog, type BindingStore } from '../src/binding.ts'
+import {
+  BindingController, sessionDisplayName, type BindingCatalog, type BindingStore, type SessionRow,
+} from '../src/binding.ts'
 import type { BindingRecord, OwnerRecord } from '../src/state.ts'
 
 const owner: OwnerRecord = {
@@ -10,12 +12,13 @@ const owner: OwnerRecord = {
 function harness() {
   let saved: BindingRecord | undefined
   const workspaces = [
-    { workspaceId: 'w1', title: 'Harness', path: '/Users/missher/Harness', sessionIds: ['idle', 'run', 'blank', 'child'] },
+    { workspaceId: 'w1', title: 'Harness', path: '/Users/missher/Harness', sessionIds: ['idle', 'run', 'newer', 'blank', 'child'] },
     { workspaceId: 'w2', title: 'Other', path: '/Users/missher/Other', sessionIds: ['wrong-cwd', 'archived'] },
   ]
-  const sessions = [
-    { sessionId: 'idle', updatedAt: 4, running: false, blank: false, cwd: '/Users/missher/Harness' },
-    { sessionId: 'run', updatedAt: 2, running: true, blank: false, cwd: '/Users/missher/Harness' },
+  const sessions: SessionRow[] = [
+    { sessionId: 'idle', title: 'Old task', updatedAt: 4, running: false, blank: false, cwd: '/Users/missher/Harness' },
+    { sessionId: 'run', title: '  回复卡片\n排版优化  ', updatedAt: 2, running: true, blank: false, cwd: '/Users/missher/Harness' },
+    { sessionId: 'newer', updatedAt: 5, running: false, blank: false, cwd: '/Users/missher/Harness' },
     { sessionId: 'blank', updatedAt: 9, running: false, blank: true, cwd: '/Users/missher/Harness' },
     { sessionId: 'child', updatedAt: 8, running: true, blank: false, origin: 'subagent' as const, cwd: '/Users/missher/Harness' },
     { sessionId: 'wrong-cwd', updatedAt: 7, running: true, blank: false, cwd: '/tmp/not-other' },
@@ -52,13 +55,21 @@ describe('project and ordinary Session binding', () => {
     ])
   })
 
-  test('shows only ordinary matching Sessions with running first', async () => {
+  test('shows only ordinary matching Sessions with running first and recent idle Sessions next', async () => {
     const h = harness()
     await expect(h.controller.listSessions('w1')).resolves.toEqual([
       expect.objectContaining({ sessionId: 'run', running: true }),
+      expect.objectContaining({ sessionId: 'newer', running: false }),
       expect.objectContaining({ sessionId: 'idle', running: false }),
     ])
     await expect(h.controller.listSessions('w2')).resolves.toEqual([])
+  })
+
+  test('uses normalized Harness titles and never falls back to the internal Session id', () => {
+    expect(sessionDisplayName({ title: '  回复卡片\n排版优化  ' })).toBe('回复卡片 排版优化')
+    expect(sessionDisplayName({})).toBe('未命名会话')
+    expect(sessionDisplayName({ title: '   ' })).toBe('未命名会话')
+    expect(sessionDisplayName({ title: '字'.repeat(100) })).toHaveLength(80)
   })
 
   test('revalidates selection, resolves through Host policy, and increments generation', async () => {

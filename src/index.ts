@@ -224,13 +224,18 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
     },
     listSessions: async () => {
       const value = responseValue(await ctx.apiProxy.sessions.list(request({})), 'session.list')
-      return value.items.map(item => ({
-        sessionId: item.sessionId, updatedAt: item.updatedAt, running: item.running,
-        blank: item.blank,
-        ...(item.parentSessionId === undefined ? {} : { parentSessionId: item.parentSessionId }),
-        ...(item.origin === undefined ? {} : { origin: item.origin }),
-        ...(item.cwd === undefined ? {} : { cwd: item.cwd }),
-      }))
+      return value.items.map((item) => {
+        const projectionValues = item.projections?.values as Record<string, unknown> | undefined
+        const title = typeof projectionValues?.title === 'string' ? projectionValues.title : undefined
+        return {
+          sessionId: item.sessionId, updatedAt: item.updatedAt, running: item.running,
+          blank: item.blank,
+          ...(title === undefined ? {} : { title }),
+          ...(item.parentSessionId === undefined ? {} : { parentSessionId: item.parentSessionId }),
+          ...(item.origin === undefined ? {} : { origin: item.origin }),
+          ...(item.cwd === undefined ? {} : { cwd: item.cwd }),
+        }
+      })
     },
     resolveOrdinarySession: async (sessionId) => {
       const agent = await resolveLarkSession(ctx, sessionId)
