@@ -44,18 +44,21 @@ const usageTotal = (state: TurnProjectionState): number | undefined => {
     + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
 }
 
-/**
- * Build one Feishu card payload containing visible answer text and safe summaries only.
- * @param state - Current safe turn projection.
- * @returns An official interactive-card payload.
- */
-export function renderTurnCard(state: TurnProjectionState): unknown {
-  const toolLines = state.tools.map(tool =>
-    `${tool.status === 'running' ? '◌' : tool.status === 'completed' ? '✓' : '✕'} ${tool.title}`)
-  const pendingApprovals = state.approvals
-    .filter(approval => approval.status === 'pending')
-  const approvals = pendingApprovals.map(approval => `待确认：${approval.toolName}`)
-  const tokenTotal = usageTotal(state)
+const renderTimeline = (state: TurnProjectionState): unknown[] => {
+  if (state.tools.length === 0) return []
+  const completed = state.tools.filter(tool => tool.status === 'completed').length
+  const rows = state.tools.slice(-8).map(tool =>
+    `${tool.status === 'running' ? '🔵' : tool.status === 'completed' ? '✅' : '🔴'} ${inlineFact(tool.title)}`)
+  return [
+    { tag: 'hr' },
+    {
+      tag: 'markdown',
+      content: [`**执行过程**　${completed} / ${state.tools.length} 完成`, ...rows].join('\n'),
+    },
+  ]
+}
+
+const factsText = (state: TurnProjectionState): string => {
   const route = state.model === undefined
     ? '模型 暂不可用'
     : [
@@ -64,22 +67,28 @@ export function renderTurnCard(state: TurnProjectionState): unknown {
       ...(state.model.reasoningEffort === undefined
         ? [] : [`推理 ${inlineFact(state.model.reasoningEffort)}`]),
     ].join(' · ')
-  const primaryDetails = `${statusText[state.status]} · 耗时 ${elapsed(state.elapsedMs)} · ${route}`
-  const usageDetails = state.usage === undefined
+  const tokenTotal = usageTotal(state)
+  const usage = state.usage === undefined
     ? 'Token 暂不可用'
     : [
-      `↑ ${compactNumber(state.usage.inputTokens)} ↓ ${compactNumber(state.usage.outputTokens)}`,
-      `Token ${compactNumber(tokenTotal ?? 0)}`,
+      `输入 ${compactNumber(state.usage.inputTokens)}`,
+      `输出 ${compactNumber(state.usage.outputTokens)}`,
+      `总计 ${compactNumber(tokenTotal ?? 0)}`,
       ...(state.usage.cacheReadTokens === undefined && state.usage.cacheWriteTokens === undefined
         ? []
         : [`缓存 ${compactNumber(state.usage.cacheReadTokens ?? 0)}/${compactNumber(state.usage.cacheWriteTokens ?? 0)}`]),
     ].join(' · ')
-  const content = [
-    state.text || '正在连接 Harness 会话…',
-    toolLines.length === 0 ? '' : `\n---\n${toolLines.join('\n')}`,
-    approvals.length === 0 ? '' : `\n${approvals.join('\n')}`,
-    `\n---\n${primaryDetails}\n${usageDetails}`,
-  ].join('')
+  return `${statusText[state.status]} · 耗时 ${elapsed(state.elapsedMs)}\n${route}\n${usage}`
+}
+
+/**
+ * Build one Feishu card payload containing visible answer text and safe summaries only.
+ * @param state - Current safe turn projection.
+ * @returns An official interactive-card payload.
+ */
+export function renderTurnCard(state: TurnProjectionState): unknown {
+  const pendingApprovals = state.approvals
+    .filter(approval => approval.status === 'pending')
   return {
     config: { wide_screen_mode: true, update_multi: true, enable_forward: false },
     header: {
@@ -87,15 +96,20 @@ export function renderTurnCard(state: TurnProjectionState): unknown {
       title: { tag: 'plain_text', content: `DeepSeek Harness · ${statusText[state.status]}` },
     },
     elements: [
-      { tag: 'markdown', content },
+      { tag: 'markdown', content: state.text || '正在连接 Harness 会话…' },
+      ...renderTimeline(state),
+      { tag: 'note', elements: [{ tag: 'plain_text', content: factsText(state) }] },
       ...pendingApprovals.flatMap(approval => approval.allowValue === undefined || approval.denyValue === undefined
         ? []
-        : [{
-          tag: 'action', layout: 'bisected', actions: [
-            { tag: 'button', type: 'primary', text: { tag: 'plain_text', content: '允许一次' }, value: approval.allowValue },
-            { tag: 'button', type: 'danger', text: { tag: 'plain_text', content: '拒绝' }, value: approval.denyValue },
-          ],
-        }]),
+        : [
+          { tag: 'markdown', content: `**待确认**　${inlineFact(approval.toolName)}` },
+          {
+            tag: 'action', layout: 'bisected', actions: [
+              { tag: 'button', type: 'primary', text: { tag: 'plain_text', content: '允许一次' }, value: approval.allowValue },
+              { tag: 'button', type: 'danger', text: { tag: 'plain_text', content: '拒绝' }, value: approval.denyValue },
+            ],
+          },
+        ]),
     ],
   }
 }

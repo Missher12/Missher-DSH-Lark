@@ -49,8 +49,8 @@ describe('monotonic streaming card', () => {
     expect(payloads[1]).toContain('deepseek-v4-flash')
     expect(payloads[1]).toContain('deepseek')
     expect(payloads[1]).toContain('max')
-    expect(payloads[1]).toContain('↑ 10')
-    expect(payloads[1]).toContain('↓ 5')
+    expect(payloads[1]).toContain('输入 10')
+    expect(payloads[1]).toContain('输出 5')
     expect(payloads[1]).toContain('缓存 2/0')
     expect(payloads[1]).toContain('允许一次')
     expect(payloads[1]).toContain('拒绝')
@@ -123,6 +123,43 @@ describe('monotonic streaming card', () => {
 
   test('renders unavailable usage truthfully', () => {
     expect(JSON.stringify(renderTurnCard(state('working')))).toContain('暂不可用')
+  })
+
+  test('renders answer-first content, a compact execution timeline, and explicit runtime facts', () => {
+    const payload = renderTurnCard({
+      ...state('最终回答'),
+      tools: [
+        { callId: 'c1', title: '检查仓库结构', kind: 'terminal', status: 'completed' },
+        { callId: 'c2', title: '运行测试', kind: 'terminal', status: 'running' },
+      ],
+      model: { provider: 'deepseek', model: 'deepseek-v4', reasoningEffort: 'max' },
+      usage: { inputTokens: 10_400, outputTokens: 2_400, cacheReadTokens: 800 },
+    })
+    const rendered = JSON.stringify(payload)
+    expect(rendered.indexOf('最终回答')).toBeLessThan(rendered.indexOf('执行过程'))
+    expect(rendered).toContain('检查仓库结构')
+    expect(rendered).toContain('运行测试')
+    expect(rendered).toContain('deepseek-v4')
+    expect(rendered).toContain('输入 10.4k')
+    expect(rendered).toContain('输出 2.4k')
+    expect(rendered).toContain('缓存 800/0')
+    expect(rendered).not.toContain('raw-secret')
+    expect((payload as { elements: Array<{ tag: string }> }).elements.map(element => element.tag))
+      .toEqual(['markdown', 'hr', 'markdown', 'note'])
+  })
+
+  test('shows only the latest eight projected tool facts', () => {
+    const payload = renderTurnCard({
+      ...state('完成'),
+      tools: Array.from({ length: 10 }, (_, index) => ({
+        callId: `c${index}`, title: `步骤 ${index}`, kind: 'terminal', status: 'completed' as const,
+      })),
+    })
+    const rendered = JSON.stringify(payload)
+    expect(rendered).not.toContain('步骤 0')
+    expect(rendered).not.toContain('步骤 1')
+    expect(rendered).toContain('步骤 2')
+    expect(rendered).toContain('10 / 10 完成')
   })
 })
 
