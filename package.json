@@ -49,7 +49,9 @@
     "verify:identity": "node scripts/verify-identity.mjs",
     "test:host": "node scripts/run-in-harness.mjs vitest",
     "bundle:host": "node scripts/run-in-harness.mjs bundle",
-    "pack:host": "node scripts/run-in-harness.mjs pack"
+    "pack:host": "node scripts/run-in-harness.mjs pack",
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
   },
   "files": [
     "lib/index.js",
