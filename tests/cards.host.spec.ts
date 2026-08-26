@@ -161,6 +161,21 @@ describe('monotonic streaming card', () => {
     expect(rendered).toContain('步骤 2')
     expect(rendered).toContain('10 / 10 完成')
   })
+
+  test('shows turn controls only while the turn can still be changed', () => {
+    const controls = {
+      steer: { nonce: 'steer', action: 'steer-help', generation: 1 },
+      stop: { nonce: 'stop', action: 'stop-turn', generation: 1 },
+    }
+    const streaming = JSON.stringify(renderTurnCard({ ...state('进行中'), controls }))
+    expect(streaming).toContain('插话')
+    expect(streaming).toContain('停止')
+    expect(streaming).toContain('steer-help')
+    expect(streaming).toContain('stop-turn')
+    const completed = JSON.stringify(renderTurnCard({ ...state('完成', 'completed'), controls }))
+    expect(completed).not.toContain('steer-help')
+    expect(completed).not.toContain('stop-turn')
+  })
 })
 
 const owner: OwnerRecord = {

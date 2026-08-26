@@ -46,6 +46,7 @@ import { TurnProjection, type TurnProjectionState } from './projection.ts'
 import { LarkRuntimeController } from './runtime.ts'
 import { larkDomainSpec } from './state.ts'
 import { LarkTransport } from './transport.ts'
+import { TurnControlService } from './turn-controls.ts'
 
 export * from './approval.ts'
 export * from './attachments.ts'
@@ -61,6 +62,7 @@ export * from './projection.ts'
 export * from './runtime.ts'
 export * from './state.ts'
 export * from './transport.ts'
+export * from './turn-controls.ts'
 export { Config } from './config.ts'
 
 export const name = 'lark'
@@ -441,6 +443,19 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
     throttleMs: settings.get().streamThrottleMs ?? 350,
   })
   const activeTurns = new Map<string, ActiveTurn>()
+  const turnControls = new TurnControlService({
+    identity,
+    transport: transportFacade,
+    stop: async ({ sessionId, turn }) => {
+      const key = `${sessionId}:${turn}`
+      const current = bindings.get('owner')
+      if (!activeTurns.has(key) || current?.state !== 'active' || current.sessionId !== sessionId) {
+        return false
+      }
+      await queue.stop()
+      return true
+    },
+  })
   let muxAbort: AbortController | undefined
   let muxTask: Promise<void> | undefined
 
@@ -452,11 +467,17 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
       await queue.onTurnEnd(frame.sessionId, frame.event.data.turn, turnOutcome(frame.event.data.reason))
     }
     if (frame.type === 'session/event' && frame.event.type === 'turn/start') {
+      const owner = owners.get('owner')
       const config = ctx.agents.get(frame.sessionId)?.session.requestHeader()?.config
       const projection = new TurnProjection(frame.sessionId, config === undefined ? undefined : {
         provider: config.provider, model: config.model,
         ...(config.reasoningEffort === undefined ? {} : { reasoningEffort: String(config.reasoningEffort) }),
       })
+      if (owner !== undefined) {
+        projection.setControls(await turnControls.issue(owner.generation, {
+          sessionId: frame.sessionId, turn: frame.event.data.turn,
+        }))
+      }
       const initial: TurnProjectionState = {
         ...projection.snapshot(), turn: frame.event.data.turn,
       }
@@ -552,6 +573,10 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
             || input.value.action === 'select-model'
             || input.value.action === 'select-reasoning') {
             await commandCenter.handleAction(input)
+            return
+          }
+          if (input.value.action === 'steer-help' || input.value.action === 'stop-turn') {
+            await turnControls.handle(input)
             return
           }
           if (input.value.action === 'approve-once' || input.value.action === 'deny') {

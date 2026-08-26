@@ -137,7 +137,7 @@ export const callbackNonceRecordSchema = z.object({
   action: z.enum([
     'select-project', 'select-session', 'cancel-selection',
     'command-action', 'select-model-provider', 'select-model', 'select-reasoning',
-    'approve-once', 'deny', 'resume', 'clear',
+    'approve-once', 'deny', 'steer-help', 'stop-turn', 'resume', 'clear',
   ]),
   data: z.record(z.string().max(64), z.string().max(512))
     .refine(value => Object.keys(value).length <= 4).optional(),

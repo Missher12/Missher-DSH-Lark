@@ -64,6 +64,11 @@ describe('dsh-lark durable state v1', () => {
       id: 'nonce-2', ownerOpenId: 'ou_owner', chatId: 'oc_dm', generation: 3,
       action: 'cancel-selection', expiresAt: now + 60_000, createdAt: now,
     }).action).toBe('cancel-selection')
+    expect(callbackNonceRecordSchema.parse({
+      id: 'nonce-3', ownerOpenId: 'ou_owner', chatId: 'oc_dm', generation: 3,
+      action: 'stop-turn', data: { sessionId: 'session-1', turn: '7' },
+      expiresAt: now + 60_000, createdAt: now,
+    }).action).toBe('stop-turn')
     expect(stagedFileRecordSchema.parse({
       id: 'file-1', path: '/private/dsh/lark/files/file-1.pdf', name: 'file.pdf',
       size: 1024, sha256: 'a'.repeat(64), expiresAt: now + 60_000, createdAt: now,

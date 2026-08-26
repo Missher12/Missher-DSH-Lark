@@ -52,12 +52,16 @@ describe('safe Harness turn projection', () => {
 
   test('tracks approvals, elapsed time, and exact terminal reason', () => {
     const projection = new TurnProjection('session-1')
+    projection.setControls({
+      steer: { action: 'steer-help' }, stop: { action: 'stop-turn' },
+    })
     projection.apply(event('turn/start', { turn: 2 }, 1000))
     projection.apply({ type: 'approval/requested', sessionId: 'session-1', approvalId: 'a1', toolName: 'bash', rpcId: 'rpc-1' })
     projection.apply({ type: 'approval/resolved', sessionId: 'session-1', approvalId: 'a1', outcome: { kind: 'denied' } })
     projection.apply(event('turn/end', { turn: 2, reason: { kind: 'completed' } }, 2500))
     expect(projection.snapshot()).toMatchObject({
       status: 'completed', elapsedMs: 1500,
+      controls: { steer: { action: 'steer-help' }, stop: { action: 'stop-turn' } },
       approvals: [{ approvalId: 'a1', toolName: 'bash', status: 'resolved' }],
     })
   })

@@ -110,6 +110,20 @@ export function renderTurnCard(state: TurnProjectionState): unknown {
             ],
           },
         ]),
+      ...(state.controls === undefined || !['placeholder', 'streaming'].includes(state.status)
+        ? []
+        : [{
+          tag: 'action', layout: 'bisected', actions: [
+            {
+              tag: 'button', text: { tag: 'plain_text', content: '插话' },
+              value: state.controls.steer,
+            },
+            {
+              tag: 'button', type: 'danger', text: { tag: 'plain_text', content: '停止' },
+              value: state.controls.stop,
+            },
+          ],
+        }]),
     ],
   }
 }

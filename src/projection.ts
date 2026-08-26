@@ -42,6 +42,7 @@ export interface TurnProjectionState {
   approvals: ProjectedApproval[]
   model?: ProjectedModel
   usage?: ProjectedUsage
+  controls?: { steer: unknown; stop: unknown }
   startedAt?: number
   elapsedMs: number
 }
@@ -86,10 +87,12 @@ export class TurnProjection {
     if (eventType === 'turn/start') {
       const turn = number(data.turn)
       const model = this.state.model
+      const controls = this.state.controls
       this.state = {
         sessionId: this.sessionId,
         status: 'streaming', text: '', tools: [], approvals: [],
         ...(model === undefined ? {} : { model }),
+        ...(controls === undefined ? {} : { controls }),
         ...(turn === undefined ? {} : { turn }),
         ...(time === undefined ? {} : { startedAt: time }),
         elapsedMs: 0,
@@ -134,6 +137,16 @@ export class TurnProjection {
    */
   snapshot(): TurnProjectionState {
     return structuredClone(this.state)
+  }
+
+  /**
+   * Attach ephemeral signed controls without admitting them into event projection.
+   * @param controls - Owner-bound card values for the current turn.
+   * @returns A cloned safe projection snapshot.
+   */
+  setControls(controls: { steer: unknown; stop: unknown }): TurnProjectionState {
+    this.state.controls = structuredClone(controls)
+    return this.snapshot()
   }
 
   /**
