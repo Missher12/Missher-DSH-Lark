@@ -69,6 +69,7 @@ export class IdentityService {
   private readonly nonce: () => string
   private readonly pairingTtlMs: number
   private pending: PendingPairing | undefined
+  private expectedOwnerOpenId: string | undefined
 
   constructor(private readonly store: IdentityStore, private readonly options: IdentityOptions = {}) {
     this.now = options.now ?? Date.now
@@ -93,6 +94,17 @@ export class IdentityService {
     }
     const owner = await this.store.getOwner()
     if (owner === undefined) {
+      if (this.expectedOwnerOpenId !== undefined) {
+        if (input.senderOpenId !== this.expectedOwnerOpenId) return { kind: 'rejected' }
+        const now = this.now()
+        await this.store.putOwner({
+          id: 'owner', openId: input.senderOpenId, chatId: input.chatId,
+          generation: 1, pairedAt: now, updatedAt: now,
+        })
+        this.expectedOwnerOpenId = undefined
+        this.pending = undefined
+        return { kind: 'owner' }
+      }
       if (this.pending === undefined || this.pending.expiresAt <= this.now()
         || this.pending.openId !== input.senderOpenId || this.pending.chatId !== input.chatId) {
         this.pending = {
@@ -134,6 +146,7 @@ export class IdentityService {
     }
     await this.store.putOwner(owner)
     this.pending = undefined
+    this.expectedOwnerOpenId = undefined
     return owner
   }
 
@@ -143,6 +156,16 @@ export class IdentityService {
    */
   owner(): Promise<OwnerRecord | undefined> {
     return this.store.getOwner()
+  }
+
+  /**
+   * Restrict automatic first-message pairing to the QR scanner's exact open ID.
+   * @param openId - Scanner identity returned by App Registration.
+   */
+  expectOwner(openId: string): void {
+    if (openId.length === 0 || openId.length > 256) throw new Error('Lark expected owner is invalid')
+    this.expectedOwnerOpenId = openId
+    this.pending = undefined
   }
 
   /**

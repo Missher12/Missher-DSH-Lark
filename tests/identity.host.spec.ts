@@ -41,6 +41,19 @@ describe('owner identity fence', () => {
     await expect(identity.pairOwner('ABCD-1234')).rejects.toThrow(/already paired/)
   })
 
+  test('pairs only the QR scanner on their first private message', async () => {
+    const store = memoryStore()
+    const identity = new IdentityService(store, { now: () => 1000 })
+    identity.expectOwner('ou_scanner')
+    await expect(identity.admit(dm({ senderOpenId: 'ou_other' }))).resolves.toEqual({ kind: 'rejected' })
+    await expect(identity.admit(dm({
+      senderOpenId: 'ou_scanner', chatId: 'oc_scanner', eventId: 'evt_scanner',
+    }))).resolves.toEqual({ kind: 'owner' })
+    await expect(identity.owner()).resolves.toMatchObject({
+      openId: 'ou_scanner', chatId: 'oc_scanner', generation: 1,
+    })
+  })
+
   test('requires exact owner and chat and durably deduplicates accepted events', async () => {
     const store = memoryStore()
     const identity = new IdentityService(store, { pairingCode: () => 'ABCD-1234', now: () => 1000 })

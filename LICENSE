@@ -29,3 +29,20 @@ The WebSocket lifecycle and coalescing flush scheduler were informed by
 @larksuite/openclaw-lark 2026.7.16, licensed under the MIT License, Copyright
 (c) 2026 ByteDance Ltd. and/or its affiliates. The Harness plugin is an
 independent implementation and does not embed or depend on that package.
+
+The App Registration protocol behavior was informed by
+@larksuite/openclaw-lark-tools 1.0.47, published under the ISC License. Package
+metadata credits mazhe.nerd as author. This plugin independently implements
+only the registration protocol and does not embed or depend on that package.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
