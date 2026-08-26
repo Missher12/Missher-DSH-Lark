@@ -83,6 +83,17 @@ describe('project and ordinary Session binding', () => {
     expect(h.resolveOrdinarySession).toHaveBeenLastCalledWith('idle')
   })
 
+  test('describes active bindings with fresh project and Session names, never ids', async () => {
+    const h = harness()
+    const bound = await h.controller.bind('w1', 'run')
+    await expect(h.controller.describe(bound)).resolves.toEqual({
+      projectTitle: 'Harness', projectPath: '/Users/missher/Harness',
+      sessionTitle: '回复卡片 排版优化',
+    })
+    await expect(h.controller.statusText()).resolves.toContain('回复卡片 排版优化')
+    await expect(h.controller.statusText()).resolves.not.toContain('run')
+  })
+
   test('binds only an exact newly created ordinary Session in the selected workspace', async () => {
     const h = harness()
     await expect(h.controller.bindCreated('w1', 'blank')).resolves.toMatchObject({

@@ -63,6 +63,9 @@ function harness() {
       currentBinding = { ...binding, sessionId, generation: 2 }
       return currentBinding
     }),
+    describe: vi.fn(async () => ({
+      projectTitle: 'Project', projectPath: '/project', sessionTitle: '新开发会话',
+    })),
     statusText: vi.fn(async () => '已绑定 /project · session-1'),
   }
   const native = vi.fn(async () => ({ matched: true, kind: 'success' as const, text: 'ok' }))
@@ -154,6 +157,8 @@ describe('Harness-native Feishu command center', () => {
     await expect(h.service.handleText(message('/新建'), '/新建')).resolves.toBe('handled')
     expect(h.createSession).toHaveBeenCalledWith('workspace-1')
     expect(h.bindingController.bindCreated).toHaveBeenCalledWith('workspace-1', 'session-created')
+    expect(h.transport.sendText.mock.calls.at(-1)?.[1]).toContain('新开发会话')
+    expect(h.transport.sendText.mock.calls.at(-1)?.[1]).not.toContain('session-created')
 
     await h.service.handleText(message('/目标 ship it'), '/目标 ship it')
     expect(h.native).toHaveBeenCalledWith('session-created', '/goal ship it')

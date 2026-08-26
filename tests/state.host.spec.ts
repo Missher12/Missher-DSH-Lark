@@ -60,6 +60,10 @@ describe('dsh-lark durable state v1', () => {
       action: 'select-model', data: { provider: 'deepseek', model: 'coder' },
       expiresAt: now + 60_000, createdAt: now,
     }).action).toBe('select-model')
+    expect(callbackNonceRecordSchema.parse({
+      id: 'nonce-2', ownerOpenId: 'ou_owner', chatId: 'oc_dm', generation: 3,
+      action: 'cancel-selection', expiresAt: now + 60_000, createdAt: now,
+    }).action).toBe('cancel-selection')
     expect(stagedFileRecordSchema.parse({
       id: 'file-1', path: '/private/dsh/lark/files/file-1.pdf', name: 'file.pdf',
       size: 1024, sha256: 'a'.repeat(64), expiresAt: now + 60_000, createdAt: now,

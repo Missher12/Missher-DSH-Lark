@@ -542,7 +542,8 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
         onCardAction: async (event) => {
           const input = parseCardAction(event)
           if (input === undefined) return
-          if (input.value.action === 'select-project' || input.value.action === 'select-session') {
+          if (input.value.action === 'select-project' || input.value.action === 'select-session'
+            || input.value.action === 'cancel-selection') {
             await selection.handleAction(input)
             return
           }
@@ -602,11 +603,16 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
         ctx.credentials.describe(credentialRef(config.appSecretRef ?? LARK_APP_SECRET_REF)),
       ])
       const bound = bindings.get('owner')
+      const bindingDisplay = bound === undefined
+        ? null
+        : await binding.describe(bound).catch(() => ({
+          projectTitle: '当前项目', projectPath: bound.projectPath, sessionTitle: '未命名会话',
+        }))
       return {
         ...runtime.status(),
         credentials: { appId: appId.configured, appSecret: appSecret.configured },
         pairing: owners.get('owner') === undefined ? 'unpaired' : 'paired',
-        binding: bound === undefined ? null : { projectPath: bound.projectPath, sessionId: bound.sessionId },
+        binding: bindingDisplay,
         queueDepth: [...inboxTable.entries()].filter(([, row]) => !['terminal', 'cancelled'].includes(row.status)).length,
       }
     },

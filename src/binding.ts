@@ -41,6 +41,13 @@ export interface BindingStore {
   delete(): Promise<void>
 }
 
+/** Current human-facing names for one durable binding. */
+export interface BindingDisplay {
+  projectTitle: string
+  projectPath: string
+  sessionTitle: string
+}
+
 const canonical = (path: string): string => path.replaceAll('\\', '/').replace(/\/+$/, '')
 
 /** Project/session catalog and one exact durable owner binding. */
@@ -157,6 +164,28 @@ export class BindingController {
   }
 
   /**
+   * Resolve fresh human-facing project and Session names for a binding.
+   * Internal identifiers deliberately remain outside this view.
+   * @param binding - Durable binding to describe.
+   * @returns Current project path and owner-visible names.
+   */
+  async describe(binding: BindingRecord): Promise<BindingDisplay> {
+    const workspaces = await this.catalog.listWorkspaces()
+    const workspace = binding.workspaceId === undefined
+      ? undefined
+      : workspaces.items.find(item => item.workspaceId === binding.workspaceId)
+    const sessions = binding.workspaceId === undefined
+      ? []
+      : await this.catalog.listSessions()
+    const session = sessions.find(item => item.sessionId === binding.sessionId)
+    return {
+      projectTitle: workspace?.title ?? '当前项目',
+      projectPath: workspace?.path ?? binding.projectPath,
+      sessionTitle: sessionDisplayName(session ?? {}),
+    }
+  }
+
+  /**
    * Revalidate a persisted binding during startup.
    * @returns The recovered binding, paused when its target no longer validates.
    */
@@ -212,10 +241,13 @@ export class BindingController {
   async statusText(_message?: unknown): Promise<string> {
     const binding = await this.store.get()
     if (binding === undefined) return '尚未绑定项目和会话。发送 / 进入选择。'
+    const display = await this.describe(binding).catch(() => ({
+      projectTitle: '当前项目', projectPath: binding.projectPath, sessionTitle: '未命名会话',
+    }))
     if (binding.state === 'paused') {
-      return `已暂停 ${binding.projectPath} · ${binding.sessionId}。发送 / 重新选择。`
+      return `已暂停 ${display.projectTitle} · ${display.sessionTitle}。发送 / 重新选择。`
     }
-    return `已绑定 ${binding.projectPath} · ${binding.sessionId}`
+    return `已绑定 ${display.projectTitle} · ${display.sessionTitle}`
   }
 
   private async persist(

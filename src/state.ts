@@ -135,7 +135,7 @@ export const callbackNonceRecordSchema = z.object({
   chatId: opaqueId,
   generation,
   action: z.enum([
-    'select-project', 'select-session',
+    'select-project', 'select-session', 'cancel-selection',
     'command-action', 'select-model-provider', 'select-model', 'select-reasoning',
     'approve-once', 'deny', 'resume', 'clear',
   ]),

@@ -42,7 +42,7 @@ export function LarkSettingsSection({ t, load, action }: Props) {
         <span>{t('enabled')}</span><strong>{status === null ? '—' : status.enabled ? t('active') : t('disabled')}</strong>
         <span>{t('connected')}</span><strong>{status === null ? '—' : status.connected ? t('online') : t('offline')}</strong>
         <span>{t('pairing')}</span><strong>{status === null ? '—' : status.pairing === 'paired' ? t('paired') : t('unpaired')}</strong>
-        <span>{t('binding')}</span><strong>{status?.binding === undefined || status.binding === null ? '—' : `${status.binding.projectPath} · ${status.binding.sessionId}`}</strong>
+        <span>{t('binding')}</span><strong>{status?.binding === undefined || status.binding === null ? '—' : `${status.binding.projectTitle} · ${status.binding.sessionTitle}`}</strong>
         <span>{t('queue')}</span><strong>{status === null ? '—' : String(status.queueDepth)}</strong>
       </div>
       <div className={css.credentials}>

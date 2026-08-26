@@ -6,7 +6,7 @@ export interface LarkSettingsStatus {
   queueDepth: number
   credentials: { appId?: boolean; appSecret?: boolean }
   pairing: string
-  binding?: { projectPath: string; sessionId: string } | null
+  binding?: { projectTitle: string; projectPath: string; sessionTitle: string } | null
 }
 
 /** Same-origin client for Lark status and lifecycle actions. */

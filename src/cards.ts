@@ -1,6 +1,6 @@
 import type { TurnProjectionState } from './projection.ts'
 import type { AdmittedMessage } from './commands.ts'
-import type { BindingController, SessionRow } from './binding.ts'
+import { sessionDisplayName, type BindingController, type SessionRow } from './binding.ts'
 import type { CardActionValue, IdentityService } from './identity.ts'
 
 interface CardTransport {
@@ -260,7 +260,7 @@ export class SelectionCardService {
     const owner = await this.identity.owner()
     if (owner === undefined) throw new Error('Lark owner is not paired')
     const projects = await this.binding.listProjects()
-    const actions = await Promise.all(projects.map(async project => ({
+    const projectActions = await Promise.all(projects.map(async project => ({
       tag: 'button',
       text: { tag: 'plain_text', content: project.title },
       type: 'primary',
@@ -268,8 +268,14 @@ export class SelectionCardService {
         'select-project', owner.generation, 5 * 60_000, { workspaceId: project.workspaceId },
       ),
     })))
+    const cancelAction = {
+      tag: 'button',
+      text: { tag: 'plain_text', content: '暂不进入项目' },
+      type: 'default',
+      value: await this.identity.issueAction('cancel-selection', owner.generation, 5 * 60_000),
+    }
     const paths = projects.map(project => `**${project.title}**\n${project.path}`).join('\n\n') || '没有可选项目。'
-    await this.transport.sendCard(message.chatId, selectionCard('进入项目', paths, actions))
+    await this.transport.sendCard(message.chatId, selectionCard('进入项目', paths, [...projectActions, cancelAction]))
   }
 
   /**
@@ -282,6 +288,13 @@ export class SelectionCardService {
     const action = await this.identity.admitAction({
       openId: input.openId, chatId: owner.chatId, value: input.value,
     })
+    if (action.action === 'cancel-selection') {
+      const active = await this.binding.active()
+      await this.transport.sendText(owner.chatId, active === undefined
+        ? '已关闭项目选择，当前仍未进入项目。发送 / 可再次选择。'
+        : '已关闭项目选择，当前项目和会话保持不变。')
+      return
+    }
     const workspaceId = action.data?.workspaceId
     if (action.action === 'select-project' && workspaceId !== undefined) {
       await this.sendSessionCard(owner.chatId, owner.generation, workspaceId)
@@ -290,7 +303,8 @@ export class SelectionCardService {
     const sessionId = action.data?.sessionId
     if (action.action === 'select-session' && workspaceId !== undefined && sessionId !== undefined) {
       const bound = await this.binding.bind(workspaceId, sessionId)
-      await this.transport.sendText(owner.chatId, `已进入 ${bound.projectPath}\n会话 ${bound.sessionId}`)
+      const display = await this.binding.describe(bound)
+      await this.transport.sendText(owner.chatId, `已进入 ${display.projectTitle}\n会话 ${display.sessionTitle}`)
     }
   }
 
@@ -298,7 +312,12 @@ export class SelectionCardService {
     const sessions = await this.binding.listSessions(workspaceId)
     const actions = await Promise.all(sessions.map(async session => ({
       tag: 'button',
-      text: { tag: 'plain_text', content: session.running ? `运行中 · ${session.sessionId}` : session.sessionId },
+      text: {
+        tag: 'plain_text',
+        content: session.running
+          ? `运行中 · ${sessionDisplayName(session)}`
+          : sessionDisplayName(session),
+      },
       type: session.running ? 'primary' : 'default',
       value: await this.identity.issueAction(
         'select-session', generation, 5 * 60_000, { workspaceId, sessionId: session.sessionId },
@@ -310,7 +329,7 @@ export class SelectionCardService {
 }
 
 const sessionSummary = (session: SessionRow): string =>
-  `${session.running ? '🟢' : '⚪'} ${session.sessionId}`
+  `${session.running ? '🟢 运行中' : '⚪ 最近使用'} · ${sessionDisplayName(session)}`
 
 const selectionCard = (title: string, markdown: string, actions: unknown[]): unknown => ({
   config: { wide_screen_mode: true, enable_forward: false },

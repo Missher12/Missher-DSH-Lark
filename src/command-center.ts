@@ -146,6 +146,11 @@ interface CommandCenterDependencies {
   binding: {
     active(): Promise<BindingRecord | undefined>
     bindCreated(workspaceId: string, sessionId: string): Promise<BindingRecord>
+    describe(binding: BindingRecord): Promise<{
+      projectTitle: string
+      projectPath: string
+      sessionTitle: string
+    }>
     statusText(message?: unknown): Promise<string>
   }
   harness: CommandCenterHarness
@@ -453,7 +458,8 @@ export class CommandCenterService {
     const created = await this.deps.harness.createSession(active.workspaceId)
     try {
       const bound = await this.deps.binding.bindCreated(active.workspaceId, created.sessionId)
-      await this.deps.transport.sendText(chatId, `已新建并进入 Session：${bound.sessionId}`)
+      const display = await this.deps.binding.describe(bound)
+      await this.deps.transport.sendText(chatId, `已新建并进入：${display.sessionTitle}`)
     } catch {
       await this.deps.transport.sendText(chatId, '新 Session 已创建，但自动绑定失败。请发送 /切换 手动选择。')
     }
