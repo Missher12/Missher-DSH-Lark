@@ -23,6 +23,9 @@ export interface LarkControlPort {
   cleanup(): Promise<number>
   test(): Promise<unknown>
   setCredentials(appId: string, appSecret: string): Promise<void>
+  startOnboarding(domain: 'feishu' | 'lark'): Promise<void>
+  cancelOnboarding(): Promise<void>
+  setDomain(domain: 'feishu' | 'lark'): Promise<void>
 }
 
 /** Pure request facts used by the settings dispatcher. */
@@ -115,6 +118,21 @@ export async function dispatchLarkControl(
           return { status: 400, body: { error: 'invalid-credentials' } }
         }
         await port.setCredentials(body.appId, body.appSecret)
+        break
+      case 'start-onboarding':
+        if (body.domain !== 'feishu' && body.domain !== 'lark') {
+          return { status: 400, body: { error: 'invalid-domain' } }
+        }
+        await port.startOnboarding(body.domain)
+        break
+      case 'cancel-onboarding':
+        await port.cancelOnboarding()
+        break
+      case 'set-domain':
+        if (body.domain !== 'feishu' && body.domain !== 'lark') {
+          return { status: 400, body: { error: 'invalid-domain' } }
+        }
+        await port.setDomain(body.domain)
         break
       default: return { status: 400, body: { error: 'unknown-action' } }
     }

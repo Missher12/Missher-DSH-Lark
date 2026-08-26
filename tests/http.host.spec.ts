@@ -11,6 +11,8 @@ function port() {
     clear: vi.fn(async () => {}), pair: vi.fn(async () => {}), repair: vi.fn(async () => {}),
     cleanup: vi.fn(async () => 0), test: vi.fn(async () => ({ ok: true })),
     setCredentials: vi.fn(async () => {}),
+    startOnboarding: vi.fn(async () => {}), cancelOnboarding: vi.fn(async () => {}),
+    setDomain: vi.fn(async () => {}),
   }
 }
 
@@ -68,5 +70,26 @@ describe('same-origin Lark control capability', () => {
     expect(p.repair).toHaveBeenCalledOnce()
     expect(p.test).toHaveBeenCalledOnce()
     expect(p.cleanup).toHaveBeenCalledOnce()
+  })
+
+  test('routes QR onboarding and domain selection through exact enums only', async () => {
+    const p = port()
+    await expect(dispatchLarkControl(request({
+      action: 'start-onboarding', domain: 'feishu',
+    }), p, 'capability', 43821)).resolves.toMatchObject({ status: 200 })
+    expect(p.startOnboarding).toHaveBeenCalledWith('feishu')
+    await expect(dispatchLarkControl(request({
+      action: 'set-domain', domain: 'lark',
+    }), p, 'capability', 43821)).resolves.toMatchObject({ status: 200 })
+    expect(p.setDomain).toHaveBeenCalledWith('lark')
+    await dispatchLarkControl(request({ action: 'cancel-onboarding' }), p, 'capability', 43821)
+    expect(p.cancelOnboarding).toHaveBeenCalledOnce()
+
+    await expect(dispatchLarkControl(request({
+      action: 'start-onboarding', domain: 'unknown',
+    }), p, 'capability', 43821)).resolves.toMatchObject({ status: 400 })
+    await expect(dispatchLarkControl(request({
+      action: 'set-domain', domain: 'unknown',
+    }), p, 'capability', 43821)).resolves.toMatchObject({ status: 400 })
   })
 })

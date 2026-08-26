@@ -17,6 +17,7 @@ import type {} from '@deepseek-ai/dsh-jobs'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { ApprovalBridge } from './approval.ts'
+import { AppRegistrationController } from './app-registration.ts'
 import { LarkAttachmentService } from './attachments.ts'
 import { BindingController, type BindingCatalog } from './binding.ts'
 import {
@@ -49,6 +50,7 @@ import { LarkTransport } from './transport.ts'
 import { TurnControlService } from './turn-controls.ts'
 
 export * from './approval.ts'
+export * from './app-registration.ts'
 export * from './attachments.ts'
 export * from './binding.ts'
 export * from './cards.ts'
@@ -609,6 +611,17 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
     cleanup: () => attachments.cleanup(),
     connectionStatus: () => transportConnected,
   })
+  const onboarding = new AppRegistrationController({
+    saveCredentials: async ({ appId, appSecret, domain: nextDomain, ownerOpenId }) => {
+      const config = settings.get()
+      await ctx.credentials.set(credentialRef(config.appSecretRef ?? LARK_APP_SECRET_REF), appSecret)
+      await ctx.credentials.set(credentialRef(config.appIdRef ?? LARK_APP_ID_REF), appId)
+      await settings.update({ domain: nextDomain })
+      identity.expectOwner(ownerOpenId)
+      if (!runtime.status().enabled) await runtime.enable()
+      await settings.update({ enabled: true })
+    },
+  })
 
   const clearTable = async <T>(table: { keys(): IterableIterator<string>; delete(key: string): Promise<T> }) => {
     for (const key of [...table.keys()]) await table.delete(key)
@@ -635,6 +648,8 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
         }))
       return {
         ...runtime.status(),
+        domain: config.domain ?? 'feishu',
+        onboarding: onboarding.status(),
         credentials: { appId: appId.configured, appSecret: appSecret.configured },
         pairing: owners.get('owner') === undefined ? 'unpaired' : 'paired',
         binding: bindingDisplay,
@@ -644,9 +659,19 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
     enable: async () => { await runtime.enable(); await settings.update({ enabled: true }) },
     disable: async () => { await runtime.disable(); await settings.update({ enabled: false }) },
     resume: () => runtime.resumeQueue(),
-    clear: async () => { await runtime.disable(); await resetOwnedState(); await settings.update({ enabled: false }) },
+    clear: async () => {
+      onboarding.cancel()
+      await runtime.disable()
+      await resetOwnedState()
+      await settings.update({ enabled: false })
+    },
     pair: async (code) => { await identity.pairOwner(code) },
-    repair: async () => { await runtime.disable(); await resetOwnedState(); await settings.update({ enabled: false }) },
+    repair: async () => {
+      onboarding.cancel()
+      await runtime.disable()
+      await resetOwnedState()
+      await settings.update({ enabled: false })
+    },
     cleanup: () => attachments.cleanup(),
     test: () => {
       const status = runtime.status()
@@ -656,6 +681,17 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
       const config = settings.get()
       await ctx.credentials.set(credentialRef(config.appSecretRef ?? LARK_APP_SECRET_REF), appSecret)
       await ctx.credentials.set(credentialRef(config.appIdRef ?? LARK_APP_ID_REF), appId)
+    },
+    startOnboarding: async (domain) => {
+      if (owners.get('owner') !== undefined) throw new Error('Lark owner is already paired')
+      await settings.update({ domain })
+      await onboarding.start(domain)
+    },
+    cancelOnboarding: () => { onboarding.cancel(); return Promise.resolve() },
+    setDomain: async (domain) => {
+      if (runtime.status().enabled) throw new Error('Disable Lark before changing its domain')
+      onboarding.cancel()
+      await settings.update({ domain })
     },
   }
 
@@ -677,6 +713,7 @@ export async function apply(ctx: Context, base: Config = {}): Promise<void> {
     if (!next.enabled && runtime.status().enabled) await runtime.disable()
   }), 'lark: settings watcher')
   ctx.effect(() => async () => {
+    onboarding.dispose()
     await runtime.dispose()
     await domain.close()
   }, 'lark: runtime and storage')
