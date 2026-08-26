@@ -1,0 +1,83 @@
+name: Standalone bundle CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    name: Source (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Verify identity
+        run: node scripts/verify-identity.mjs
+      - name: Build and test in pinned Harness SDK
+        run: node scripts/run-in-harness.mjs vitest
+
+  canonical:
+    name: Canonical package
+    needs: source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Build canonical package
+        run: node scripts/run-in-harness.mjs pack
+      - name: Verify canonical checksum
+        run: node scripts/verify-release.mjs .work/artifacts/missher-dsh-lark-0.2.0.tgz .work/artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dsh-lark-canonical
+          path: |
+            .work/artifacts/missher-dsh-lark-0.2.0.tgz
+            .work/artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  canonical-consumer:
+    name: Canonical consumer (${{ matrix.os }})
+    needs: canonical
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: dsh-lark-canonical
+          path: .work/canonical
+      - name: Verify identical release bytes
+        shell: bash
+        run: node scripts/verify-release.mjs .work/canonical/missher-dsh-lark-0.2.0.tgz .work/canonical/SHA256SUMS.txt
+      - name: Verify installable package contents
+        shell: bash
+        run: |
+          mkdir -p .work/extracted
+          tar -xzf .work/canonical/missher-dsh-lark-0.2.0.tgz -C .work/extracted
+          node scripts/verify-extracted-package.mjs .work/extracted/package
