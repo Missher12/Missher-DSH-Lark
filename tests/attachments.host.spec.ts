@@ -37,7 +37,9 @@ describe('Lark attachment boundaries', () => {
     expect(record.path.startsWith(root)).toBe(true)
     expect(record.path).not.toContain('project.env')
     expect(await readFile(record.path, 'utf8')).toBe('safe')
-    expect((await stat(record.path)).mode & 0o077).toBe(0)
+    const staged = await stat(record.path)
+    expect(staged.isFile()).toBe(true)
+    if (process.platform !== 'win32') expect(staged.mode & 0o077).toBe(0)
     await expect(service.stageFile({ name: 'large.bin', data: new Uint8Array(17) })).rejects.toThrow(/30 MiB|limit/)
   })
 

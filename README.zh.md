@@ -47,7 +47,7 @@ dsh plugin --profile web add https://github.com/Missher12/dsh-lark/releases/down
 
 活动绑定存在前，普通文字不会进入持久队列。机器人会回复当前绑定状态并提示所有者发送 `/进入`，而不是让飞书回调失败。
 
-图片只会在所有者校验通过后下载，通过 Harness AttachmentStore 校验并保存为持久图片引用。普通文件默认上限 30 MiB，以 `0600` 权限存放在 `$DSH_HOME/lark/files`，Agent 会收到私有临时路径和 SHA-256；默认保留七天。插件不会自动把附件写入已选择的项目。
+图片只会在所有者校验通过后下载，通过 Harness AttachmentStore 校验并保存为持久图片引用。普通文件默认上限 30 MiB，存放在 `$DSH_HOME/lark/files`；POSIX 系统使用 `0600`，Windows 继承所在用户目录的 ACL。Agent 会收到私有临时路径和 SHA-256，文件默认保留七天。插件不会自动把附件写入已选择的项目。
 
 ## 命令与输出
 

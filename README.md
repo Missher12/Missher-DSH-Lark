@@ -47,7 +47,7 @@ Ordinary text then becomes one remote Harness turn in that exact Session and app
 
 Before an active binding exists, ordinary text is not accepted into the durable queue. The bot replies with the current binding status and directs the owner to `/进入` instead of failing the Feishu callback.
 
-Images are downloaded only after owner admission, validated by the Harness AttachmentStore, and committed as durable image references. Generic files are limited to 30 MiB, stored with mode `0600` under `$DSH_HOME/lark/files`, described to the Agent by a private temporary path plus SHA-256, and retained for seven days by default. No attachment is written into the selected project automatically.
+Images are downloaded only after owner admission, validated by the Harness AttachmentStore, and committed as durable image references. Generic files are limited to 30 MiB and stored under `$DSH_HOME/lark/files` with mode `0600` on POSIX systems and the containing user directory's inherited ACL on Windows. They are described to the Agent by a private temporary path plus SHA-256 and retained for seven days by default. No attachment is written into the selected project automatically.
 
 ## Commands and output
 
