@@ -27,9 +27,11 @@ const entries = [
   'README.zh.md',
   'README.i18n.yaml',
   'LICENSE',
+  'scripts/migrate-profile.mjs',
 ]
 
 for (const entry of entries) {
+  await mkdir(dirname(resolve(target, entry)), { recursive: true })
   await cp(resolve(source, entry), resolve(target, entry), { recursive: true })
 }
 
