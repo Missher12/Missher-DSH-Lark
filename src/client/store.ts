@@ -1,3 +1,13 @@
+/** Browser-safe QR registration status returned by the local capability route. */
+export interface LarkOnboardingStatus {
+  state: 'idle' | 'pending' | 'succeeded' | 'denied' | 'expired' | 'failed'
+  domain?: 'feishu' | 'lark'
+  verificationUriComplete?: string
+  userCode?: string
+  expiresAt?: number
+  errorCode?: string
+}
+
 /** Browser-safe status returned by the local capability route. */
 export interface LarkSettingsStatus {
   enabled: boolean
@@ -6,6 +16,8 @@ export interface LarkSettingsStatus {
   queueDepth: number
   credentials: { appId?: boolean; appSecret?: boolean }
   pairing: string
+  domain: 'feishu' | 'lark'
+  onboarding: LarkOnboardingStatus
   binding?: { projectTitle: string; projectPath: string; sessionTitle: string } | null
 }
 
