@@ -1,14 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-lark",
+  "name": "@missher/dsh-lark",
   "description": "Owner-only Feishu and Lark remote control for DeepSeek Harness sessions",
-  "version": "0.1.1-rc.2",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/extensions/lark"
+    "url": "git+https://github.com/Missher12/dsh-lark.git"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -47,8 +46,10 @@
     }
   },
   "scripts": {
-    "bundle": "tsdown",
-    "watch": "tsdown --watch"
+    "verify:identity": "node scripts/verify-identity.mjs",
+    "test:host": "node scripts/run-in-harness.mjs vitest",
+    "bundle:host": "node scripts/run-in-harness.mjs bundle",
+    "pack:host": "node scripts/run-in-harness.mjs pack"
   },
   "files": [
     "lib/index.js",

@@ -18,7 +18,7 @@ describe('dsh-lark removable bundle composition', () => {
     const patch = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
     expect(patch.match(/\n\s*- id:/g)).toHaveLength(1)
     expect(patch).toContain('id: lark')
-    expect(patch).toContain("name: '@deepseek-ai/dsh-lark'")
+    expect(patch).toContain("name: '@missher/dsh-lark'")
   })
 
   it('ships complete package exports and stays out of the Desktop default layer', async () => {
@@ -38,7 +38,7 @@ describe('dsh-lark removable bundle composition', () => {
 
     const desktopPatch = await readFile(new URL('apps/desktop/desktop.cordis.patch.yml', repositoryRoot), 'utf8')
     const desktopManifest = await readFile(new URL('apps/desktop/package.json', repositoryRoot), 'utf8')
-    expect(desktopPatch).not.toContain('@deepseek-ai/dsh-lark')
-    expect(desktopManifest).not.toContain('@deepseek-ai/dsh-lark')
+    expect(desktopPatch).not.toContain('@missher/dsh-lark')
+    expect(desktopManifest).not.toContain('@missher/dsh-lark')
   })
 })

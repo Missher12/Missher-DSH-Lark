@@ -9,6 +9,7 @@ interface PackageManifest {
   name: string
   version: string
   license: string
+  repository: { type: string; url: string }
   dependencies: Record<string, string>
   devDependencies: Record<string, string>
   dsh: { bundle: { patch: string }; client: { platform: string; inject: string[] } }
@@ -21,9 +22,13 @@ describe('dsh-lark package contract', () => {
     ) as PackageManifest
 
     expect(manifest).toMatchObject({
-      name: '@deepseek-ai/dsh-lark',
-      version: '0.1.1-rc.2',
+      name: '@missher/dsh-lark',
+      version: '0.2.0',
       license: 'MIT',
+      repository: {
+        type: 'git',
+        url: 'git+https://github.com/Missher12/dsh-lark.git',
+      },
       dsh: {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },
@@ -40,6 +45,6 @@ describe('dsh-lark package contract', () => {
 
     expect(patch.match(/\n\s*- id:/g)).toHaveLength(1)
     expect(patch).toContain('id: lark')
-    expect(patch).toContain("name: '@deepseek-ai/dsh-lark'")
+    expect(patch).toContain("name: '@missher/dsh-lark'")
   })
 })

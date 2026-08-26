@@ -12,7 +12,7 @@ import {
   writeProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-lark'
+const PACKAGE_NAME = '@missher/dsh-lark'
 const roots: string[] = []
 
 afterEach(async () => {
@@ -31,8 +31,8 @@ describe('real Profile install and removal composition', () => {
     await writeFile(sessionFile, '{"type":"user/message"}\n')
 
     const packageRoot = new URL('..', import.meta.url).pathname
-    const installedPackage = join(profileDir, 'node_modules', '@deepseek-ai', 'dsh-lark')
-    await mkdir(join(profileDir, 'node_modules', '@deepseek-ai'), { recursive: true })
+    const installedPackage = join(profileDir, 'node_modules', '@missher', 'dsh-lark')
+    await mkdir(join(profileDir, 'node_modules', '@missher'), { recursive: true })
     await symlink(packageRoot, installedPackage, 'junction')
 
     const installed = readProfileManifest('test', profileDir)

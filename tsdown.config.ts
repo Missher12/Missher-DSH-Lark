@@ -19,7 +19,7 @@ const releasePathSanitizer = {
   },
 } satisfies NonNullable<UserConfig['plugins']>[number]
 
-const packageBuild = clientBundle('@deepseek-ai/dsh-lark', [
+const packageBuild = clientBundle('@missher/dsh-lark', [
   'lib/types/index.js',
   'lib/types/invariant.js',
 ], {
@@ -28,7 +28,7 @@ const packageBuild = clientBundle('@deepseek-ai/dsh-lark', [
 
 export default (inlineConfig: Pick<UserConfig, 'env'>): UserConfig[] =>
   packageBuild(inlineConfig).map((config) => {
-    if (config.name !== '@deepseek-ai/dsh-lark/client') return config
+    if (config.name !== '@missher/dsh-lark/client') return config
     return {
       ...config,
       plugins: [...(config.plugins ?? []), releasePathSanitizer],

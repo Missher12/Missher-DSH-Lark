@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-lark'
+const PACKAGE_NAME = '@missher/dsh-lark'
 
 export const name = 'lark-invariant'
 export const inject = ['invariants']
