@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-lark
+# @missher/dsh-lark
 
 [English](README.md) | 中文
 
@@ -6,9 +6,19 @@
 
 ## 安装
 
-在本仓库构建并打包，再把 tarball 加入 `web` Profile：先运行 `pnpm --filter @deepseek-ai/dsh-lark bundle`，再运行 `pnpm --filter @deepseek-ai/dsh-lark pack --pack-destination ./artifacts`，最后运行 `dsh plugin --profile web add /absolute/path/to/artifacts/deepseek-ai-dsh-lark-0.1.1-rc.2.tgz`。
+把独立 Release 直接安装到 `web` Profile：
 
-安装后重启 Harness。该事务会同时写入包依赖和 `dsh.profile.bundles` 层。它不是 Desktop 强制内置插件，可以独立移除。
+```bash
+dsh plugin --profile web add https://github.com/Missher12/dsh-lark/releases/download/v0.2.0/missher-dsh-lark-0.2.0.tgz
+```
+
+安装后重启 Harness。该事务会同时写入包依赖和 `dsh.profile.bundles` 层。本插件不属于 DeepSeek Harness Desktop 仓库，也不是 Desktop 强制内置插件，可以独立停用或移除。需要从源码构建同一安装包时，运行 `node scripts/run-in-harness.mjs pack`；canonical tarball 和 LF-only 校验文件会生成在 `.work/artifacts/` 下。
+
+### 从旧包升级
+
+公开包名从 `@deepseek-ai/dsh-lark` 改为 `@missher/dsh-lark`，但运行时 Bundle ID 仍是 `lark`，Storage Domain 仍是 schema 1 的 `dsh_lark`。因此 `$DSH_HOME/lark`、所有者/绑定/队列状态和凭据引用都可以原样保留。
+
+不要在同一个活动 Profile 中同时安装两个包名。请先退出 Harness，下载 canonical tarball，再按 [docs/migration.zh.md](docs/migration.zh.md) 执行分阶段迁移。迁移器先在同级临时目录完成安装和校验，成功后才交换精确 Profile，并保留旧 Profile 作为回滚备份；它不会读取或修改 `$DSH_HOME/lark` 和 Credentials。
 
 ## 飞书/Lark 应用设置
 
@@ -59,7 +69,7 @@ Harness 审批复用现有 ApiProxy 审批记录。飞书端只提供“允许�
 
 在 Harness 设置中停用后，插件会拒绝新入口、关闭 WebSocket 和 mux 流、停止卡片计时器，并暂停尚未投递的远程队列。重新启用时不会偷偷重放，必须在本地点击“恢复队列”。完整退出 Harness 后不会留下接收器或后台守护进程。
 
-“清除数据”只删除插件自有的所有者、绑定、队列/卡片/nonce 元数据和私有暂存文件，不会删除 Harness 项目、Session、Session 消息、凭据或其他来源的 inbox 条目。卸载命令是 `dsh plugin --profile web remove @deepseek-ai/dsh-lark`。
+“清除数据”只删除插件自有的所有者、绑定、队列/卡片/nonce 元数据和私有暂存文件，不会删除 Harness 项目、Session、Session 消息、凭据或其他来源的 inbox 条目。卸载命令是 `dsh plugin --profile web remove @missher/dsh-lark`。
 
 移除后重启 Harness。包依赖和 Bundle 层会一起消失，普通 Session 保持不变。
 

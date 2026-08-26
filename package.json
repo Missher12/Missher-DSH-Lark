@@ -9,6 +9,10 @@
     "type": "git",
     "url": "git+https://github.com/Missher12/dsh-lark.git"
   },
+  "homepage": "https://github.com/Missher12/dsh-lark#readme",
+  "bugs": {
+    "url": "https://github.com/Missher12/dsh-lark/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

@@ -10,6 +10,7 @@ interface PackageManifest {
   version: string
   license: string
   repository: { type: string; url: string }
+  homepage: string
   dependencies: Record<string, string>
   devDependencies: Record<string, string>
   dsh: { bundle: { patch: string }; client: { platform: string; inject: string[] } }
@@ -29,6 +30,7 @@ describe('dsh-lark package contract', () => {
         type: 'git',
         url: 'git+https://github.com/Missher12/dsh-lark.git',
       },
+      homepage: 'https://github.com/Missher12/dsh-lark#readme',
       dsh: {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },

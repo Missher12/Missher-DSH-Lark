@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-lark
+# @missher/dsh-lark
 
 English | [中文](README.zh.md)
 
@@ -6,9 +6,19 @@ An independently installable DeepSeek Harness Bundle that gives one explicitly p
 
 ## Install
 
-Build and pack from this repository, then add the tarball to the `web` Profile: run `pnpm --filter @deepseek-ai/dsh-lark bundle`, run `pnpm --filter @deepseek-ai/dsh-lark pack --pack-destination ./artifacts`, then run `dsh plugin --profile web add /absolute/path/to/artifacts/deepseek-ai-dsh-lark-0.1.1-rc.2.tgz`.
+Install the standalone release directly into the `web` Profile:
 
-Restart Harness after installation. The transaction writes both the package dependency and the `dsh.profile.bundles` layer. The package is not a Desktop-managed default and can be removed independently.
+```bash
+dsh plugin --profile web add https://github.com/Missher12/dsh-lark/releases/download/v0.2.0/missher-dsh-lark-0.2.0.tgz
+```
+
+Restart Harness after installation. The transaction writes both the package dependency and the `dsh.profile.bundles` layer. The package is not part of the DeepSeek Harness Desktop repository or a Desktop-managed default, and it can be disabled or removed independently. To build the same package from source, run `node scripts/run-in-harness.mjs pack`; the canonical tarball and LF-only checksum are written below `.work/artifacts/`.
+
+### Upgrade from the legacy package
+
+The public package name changed from `@deepseek-ai/dsh-lark` to `@missher/dsh-lark`, while the runtime Bundle ID remains `lark` and the Storage Domain remains `dsh_lark` schema 1. This preserves `$DSH_HOME/lark`, owner/binding/queue state, and credential references.
+
+Do not install both package names in one live Profile. Stop Harness, download the canonical tarball, then use the staged migration command documented in [docs/migration.md](docs/migration.md). The migration installs into a sibling staging directory and swaps the exact Profile only after validation; it leaves the old Profile as a rollback backup and never reads or changes `$DSH_HOME/lark` or Credentials.
 
 ## Feishu/Lark app setup
 
@@ -59,7 +69,7 @@ Harness approval requests use the existing ApiProxy approval record. Feishu expo
 
 Disable from Harness Settings to reject new ingress, close the WebSocket and mux stream, stop card timers, and pause undispatched remote queue items. Re-enabling does not silently replay them: click Resume queue locally. Full Harness shutdown leaves no receiver or background daemon.
 
-Clear data removes only plugin-owned owner, binding, queue/card/nonce metadata and private staged files. It does not delete Harness projects, Sessions, Session messages, credentials, or unrelated inbox entries. Uninstall with `dsh plugin --profile web remove @deepseek-ai/dsh-lark`.
+Clear data removes only plugin-owned owner, binding, queue/card/nonce metadata and private staged files. It does not delete Harness projects, Sessions, Session messages, credentials, or unrelated inbox entries. Uninstall with `dsh plugin --profile web remove @missher/dsh-lark`.
 
 Restart Harness after removal. The package dependency and bundle layer disappear together; ordinary Sessions remain unchanged.
 
