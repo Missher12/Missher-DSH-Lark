@@ -1,5 +1,37 @@
 # @missher/dsh-lark
 
+[← 桌面端与安装包](https://github.com/Missher12/Missher-DeepseekHarness-Desktop) · [全部插件](https://github.com/Missher12/Missher-DeepseekHarness-Desktop/blob/main/plugins/README.zh.md) · [通用安装指南](https://github.com/Missher12/Missher-DeepseekHarness-Desktop/blob/main/docs/cookbook/install-cordis-plugins.zh.md)
+
+## 新手上手：飞书 / Lark 远程开发
+
+把已配对的个人飞书或 Lark 私聊接到 Harness，让你选择项目、会话并继续提交任务。
+
+| 你需要知道的事 | 说明 |
+| --- | --- |
+| 插件包名 | `@missher/dsh-lark` |
+| 当前源码版本 | `0.2.0` |
+| 装好后在哪里使用 | 设置 → Lark Remote Development；配对后的机器人私聊 |
+| 下载 / 源码 | [下载 0.2.0 安装包](https://github.com/Missher12/Missher-DSH-Lark/releases/tag/v0.2.0) |
+
+### 安装、启用与第一次使用
+
+1. 先从[桌面端主页](https://github.com/Missher12/Missher-DeepseekHarness-Desktop)下载适合电脑的应用，完成模型配置。这个仓库是可选插件，不是独立桌面应用。
+2. 阅读[通用安装指南](https://github.com/Missher12/Missher-DeepseekHarness-Desktop/blob/main/docs/cookbook/install-cordis-plugins.zh.md)及本页原有安装说明，核对宿主与插件版本。桌面版使用“插件 → 添加插件”；Web/CLI 使用自己的目标配置组，不混用两种安装位置。
+3. 安装后按宿主提示启用并重新加载，进入上表列出的入口。更新已有插件前保留配置和数据，不同时启用旧包名与新包名。
+4. 先在本机设置完成扫码或应用配置和配对，再向机器人私聊发送 /，选择项目和会话。
+
+### 使用前了解这些边界
+
+需要自己的飞书/Lark 应用或扫码注册。仅配对的所有者能访问；安装桌面端不会自动获得账号或权限。
+
+如果页面或功能没出现，先检查当前应用版本、插件是否启用以及加载错误。反馈时附版本、复现步骤和已脱敏错误；不要上传 API Key、真实会话、账号 Cookie 或学习数据库。Git 中的代码更新不会自动替换电脑上已安装的插件。
+
+### 继续阅读
+
+下文保留本插件的详细行为、配置、开发和验证说明。跨平台是否实际通过，以对应版本的验证记录为准；桌面安装包能启动，不代表全部插件和外部服务都已验收。
+
+---
+
 English | [中文](README.zh.md)
 
 An independently installable DeepSeek Harness Bundle that gives one explicitly paired Feishu or Lark owner a private-chat Harness command center and lets that owner continue developing in an ordinary Harness Session. It reuses the Session's existing Agent, approval policy, sandbox, tools, model, history, and project directory. It does not embed OpenClaw, create a second Agent runtime, or expose project data to unpaired users.
@@ -9,7 +41,7 @@ An independently installable DeepSeek Harness Bundle that gives one explicitly p
 Install the standalone release directly into the `web` Profile:
 
 ```bash
-dsh plugin --profile web add https://github.com/Missher12/dsh-lark/releases/download/v0.2.0/missher-dsh-lark-0.2.0.tgz
+dsh plugin --profile web add https://github.com/Missher12/Missher-DSH-Lark/releases/download/v0.2.0/missher-dsh-lark-0.2.0.tgz
 ```
 
 Restart Harness after installation. The transaction writes both the package dependency and the `dsh.profile.bundles` layer. The package is not part of the DeepSeek Harness Desktop repository or a Desktop-managed default, and it can be disabled or removed independently. To build the same package from source, run `node scripts/run-in-harness.mjs pack`; the canonical tarball and LF-only checksum are written below `.work/artifacts/`.
